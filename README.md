@@ -4,7 +4,7 @@
   <h1 align="center">STM32四轴无人机</h1>
 
 <div align=center>
-        <img src="https://img.shields.io/badge/version-0.0.1-blue">
+        <img src="https://img.shields.io/badge/version-0.0.2-blue">
         <img src=https://img.shields.io/github/stars/Styelx/Flight_001>
         <img src=https://img.shields.io/badge/OS-FreeRTOS-green>
 </div>
@@ -27,6 +27,7 @@
 <a href="https://space.bilibili.com/335085137">bilibili主页 </a> |
 <a href="https://github.com/Styelx">GitHub主页 </a> 
 <br>
+
 ## :black_nib:使用Clion进行工程构建，烧录：
 
 建议在STM32Cube官网下载STM32CubeCLT，STM32CubeCLT包含一套完整的编译工具和ST-LINK驱动.
