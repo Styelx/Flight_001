@@ -4,10 +4,11 @@
   <h1 align="center">STM32四轴无人机</h1>
 
 <div align=center>
-        <img src="https://img.shields.io/badge/version-0.0.2-blue">
+        <img src="https://img.shields.io/badge/version-0.0.3-blue">
         <img src=https://img.shields.io/github/stars/Styelx/Flight_001>
         <img src=https://img.shields.io/badge/OS-FreeRTOS-green>
 </div>
+
 
 <br>
 
@@ -51,23 +52,30 @@ CMake配置保持默认或自行添加STM32CubeCLT中提供的工具链即可
 
 ## :rocket: 增加的功能说明
 #### V0.0.1
-1. 添加原理图和PCB
+-  添加原理图和PCB
 #### V0.0.2
-1. 移植FreeRTOS操作系统
-2. 添加README.md文件
-
+-  移植FreeRTOS操作系统
+-  添加README.md文件
+#### V0.0.3
+-  添加电源管理系统
 <br>
 
 ## :bookmark_tabs:功能表：
 占位符
 
+<br>
+
 ## :file_folder:软件架构：
 
 占位符
 
+<br>
+
 ## :star2:实物图
 
 占位符
+
+<br>
 
 ## :computer:软件部分设计细节：
 #### 1、FreeRTOS操作系统
@@ -117,8 +125,10 @@ target_link_libraries(freertos_kernel_include
         $<$<TARGET_EXISTS:freertos_config>:freertos_config>
 )
 ```
-
-
-
-
-
+<br>
+#### 2、电源管理芯片
+使用IP5305T芯片，实现功能如下
+1. 短按一次开机，1s内连续短按两次关机
+2. 4个LED电量指示灯，1个灯代表25%电量
+3. 管理锂电池充放电，使用USB烧录口即可给锂电池充电
+4. 输出5V电压，使用AMS1117-3.3V芯片实现降压输出3.3V

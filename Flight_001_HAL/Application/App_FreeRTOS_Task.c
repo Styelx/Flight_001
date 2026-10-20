@@ -2,19 +2,13 @@
 
 //STM32F103C8T6 SRAM 20k => FreeRTOS 17k
 
-void task1( void * arg );
+//电源管理任务
+void power_task( void * arg );
 //任务所占空间128 * 4 = 512 Byte
-#define TASK1_STACK_SIZE 128
+#define POWER_TASK_STACK_SIZE 128
 //任务优先级,范围0-4，数值越大优先级越大
-#define TASK1_PRIO 2
-TaskHandle_t Task1_Handler;
-
-void task2( void * arg );
-//任务所占空间128 * 4 = 512 Byte
-#define TASK2_STACK_SIZE 128
-//任务优先级,范围0-4，数值越大优先级越大
-#define TASK2_PRIO 1
-TaskHandle_t Task2_Handler;
+#define POWER_TASK_PRIO 4
+TaskHandle_t power_task_handler;
 
 /*
  *@启动FreeRTOS
@@ -23,24 +17,20 @@ TaskHandle_t Task2_Handler;
 
 void App_FreeRTOS_start(void) {
     //1. 创建任务
-    xTaskCreate(task1, "task1", TASK1_STACK_SIZE, NULL, TASK1_PRIO, &Task1_Handler);
-
-    xTaskCreate(task2, "task2", TASK2_STACK_SIZE, NULL, TASK2_PRIO, &Task1_Handler);
-
+    xTaskCreate(power_task, "power_task", POWER_TASK_STACK_SIZE, NULL, POWER_TASK_PRIO, &power_task_handler);
     //2. 启动调度器
     vTaskStartScheduler();
 }
 
-void task1( void * arg ) {
-    while(1) {
-        debug_printf("task1\r\n");
-        vTaskDelay(1000);
+void power_task( void * arg ) {
+    //获取基准时间
+    TickType_t xLastExecutionTime = xTaskGetTickCount();
+    while (1) {
+        //每10s执行一次，启动电源防止自动关机
+        vTaskDelayUntil(&xLastExecutionTime,10000);
+        //先延时再启动，防止第一次启动时按键抖动导致关机
+        //启动电源
+        Int_IP5305T_start();
     }
 }
 
-void task2( void * arg ) {
-    while(1) {
-        debug_printf("task2\r\n");
-        vTaskDelay(1000);
-    }
-}

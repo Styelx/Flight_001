@@ -4,6 +4,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "com_debug.h"
+#include "Int_IP5305T.h"
 
 /*
  *@启动FreeRTOS
