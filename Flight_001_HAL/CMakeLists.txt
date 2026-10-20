@@ -59,6 +59,8 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         common/com_debug.c
         Application/App_FreeRTOS_Task.c
         interface/Int_IP5305T.c
+        interface/Int_motor.c
+        interface/Int_led.c
 )
 
 # Add include paths

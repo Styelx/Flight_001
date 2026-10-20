@@ -4,10 +4,11 @@
   <h1 align="center">STM32四轴无人机</h1>
 
 <div align=center>
-        <img src="https://img.shields.io/badge/version-0.0.3-blue">
+        <img src="https://img.shields.io/badge/version-0.0.4-blue">
         <img src=https://img.shields.io/github/stars/Styelx/Flight_001>
         <img src=https://img.shields.io/badge/OS-FreeRTOS-green>
 </div>
+
 
 
 <br>
@@ -58,6 +59,9 @@ CMake配置保持默认或自行添加STM32CubeCLT中提供的工具链即可
 -  添加README.md文件
 #### V0.0.3
 -  添加电源管理系统
+#### V0.0.4
+-  基础电机控制
+-  LED灯状态指示
 <br>
 
 ## :bookmark_tabs:功能表：
@@ -127,8 +131,33 @@ target_link_libraries(freertos_kernel_include
 ```
 <br>
 #### 2、电源管理芯片
-使用IP5305T芯片，实现功能如下
-1. 短按一次开机，1s内连续短按两次关机
-2. 4个LED电量指示灯，1个灯代表25%电量
-3. 管理锂电池充放电，使用USB烧录口即可给锂电池充电
-4. 输出5V电压，使用AMS1117-3.3V芯片实现降压输出3.3V
+使用IP5305T芯片，实现功能如下:
+1. 短按一次开机，1s内连续短按两次关机.
+
+2. 4个LED电量指示灯，1个灯代表25%电量.
+
+3. 管理锂电池充放电，使用USB烧录口即可给锂电池充电.
+
+4. 输出5V电压，使用AMS1117-3.3V芯片实现降压输出3.3V.
+
+<br>
+#### 3、8520空心杯电机
+
+使用TIM定时器输出PWM波形, 预分频系数4-1, 自动重装值1000-1, 默认比较值200, 默认占空比200/1000 = 20%, PWM频率为72MHz/4 = 18MHz, 周期1000/18MHz =55.56us.
+
+<br>
+
+#### 4、LED闪烁指示灯
+
+1. 前两个灯亮表示连接上遥控器
+
+2. 后两个灯亮表示定高功能
+
+3. 后两个灯灭表示无人机故障
+
+4. 后两个灯慢闪表示空闲状态
+
+5. 后两个灯快闪表示飞行状态
+
+<br>
+

@@ -3,8 +3,11 @@
 
 #include "FreeRTOS.h"
 #include "task.h"
+#include "com_config.h"
 #include "com_debug.h"
 #include "Int_IP5305T.h"
+#include "Int_motor.h"
+#include "Int_led.h"
 
 /*
  *@启动FreeRTOS
