@@ -45,6 +45,16 @@ void led_task( void * arg );
 #define LED_TASK_PRIO 1
 TaskHandle_t led_task_handler;
 #define LED_TASK_PERIOD 100
+
+//SI24R1通讯任务
+void si24r1_task( void * arg );
+//任务所占空间128 * 4 = 512 Byte
+#define SI24R1_TASK_STACK_SIZE 128
+//任务优先级,范围0-4，数值越大优先级越大
+#define SI24R1_TASK_PRIO 2
+TaskHandle_t si24r1_task_handler;
+#define SI24R1_TASK_PERIOD 6
+
 /*
  *@启动FreeRTOS
  *
@@ -60,6 +70,9 @@ void App_FreeRTOS_start(void) {
 
     //3. 创建LED任务
     xTaskCreate(led_task, "led_task", LED_TASK_STACK_SIZE, NULL,LED_TASK_PRIO,&led_task_handler);
+
+    //4. 创建SI24R1通讯任务
+    xTaskCreate(si24r1_task,"si24r1_task",SI24R1_TASK_STACK_SIZE,NULL,SI24R1_TASK_PRIO,&si24r1_task_handler);
 
     //启动调度器
     vTaskStartScheduler();
@@ -155,3 +168,18 @@ void led_task( void * arg ) {
     }
 }
 
+uint8_t si24r1_data[TX_PLOAD_WIDTH + 1] = {0};
+
+void si24r1_task( void * arg ) {
+    //获取基准时间
+    TickType_t xLastExecutionTime = xTaskGetTickCount();
+    while (1) {
+        //1. 进入RX模式
+        uint8_t flag = Int_SI24R1_RxPacket(si24r1_data);
+        if (flag == 0) {
+            debug_printf("Receive Successfully:%s\n",si24r1_data);
+        }
+        //6ms执行一次
+        vTaskDelayUntil(&xLastExecutionTime, SI24R1_TASK_PERIOD);
+    }
+}

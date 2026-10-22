@@ -4,13 +4,10 @@
   <h1 align="center">STM32四轴无人机</h1>
 
 <div align=center>
-        <img src="https://img.shields.io/badge/version-0.0.4-blue">
+        <img src="https://img.shields.io/badge/version-0.0.5-blue">
         <img src=https://img.shields.io/github/stars/Styelx/Flight_001>
         <img src=https://img.shields.io/badge/OS-FreeRTOS-green>
 </div>
-
-
-
 <br>
 
 ## :ledger: Overview
@@ -19,18 +16,18 @@
 
 不同的是开发环境使用STM32CubeMX+Clion，默认编译工具为CMake，涉及部分CMake环境配置.
 
-适合用来进行STM32CubeMX+Clion进行STM32开发的练习.
+该项目仅用来记录个人使用STM32CubeMX+Clion进行STM32开发的练习.
 
 <br>
 
-## :link:个人主页：
+## :link:个人主页
 
 <p align="center">
 <a href="https://space.bilibili.com/335085137">bilibili主页 </a> |
 <a href="https://github.com/Styelx">GitHub主页 </a> 
 <br>
 
-## :black_nib:使用Clion进行工程构建，烧录：
+## :black_nib:使用Clion进行工程构建，烧录
 
 建议在STM32Cube官网下载STM32CubeCLT，STM32CubeCLT包含一套完整的编译工具和ST-LINK驱动.
 
@@ -52,36 +49,67 @@ CMake配置保持默认或自行添加STM32CubeCLT中提供的工具链即可
 <br>
 
 ## :rocket: 增加的功能说明
+
 #### V0.0.1
--  添加原理图和PCB
+- 添加原理图和PCB
 #### V0.0.2
--  移植FreeRTOS操作系统
--  添加README.md文件
+- 移植FreeRTOS操作系统
+- 添加README.md文件
 #### V0.0.3
--  添加电源管理系统
+- 添加电源管理系统
 #### V0.0.4
--  基础电机控制
--  LED灯状态指示
+- 基础电机控制
+- LED灯状态指示
+#### V0.0.5
+- 手柄按键和摇杆
+- SI24R1双端无线通讯
 <br>
 
-## :bookmark_tabs:功能表：
-占位符
+## :bookmark_tabs:硬件功能
 
+#### 1、电源管理芯片
+使用IP5305T芯片，实现功能如下:
+
+- 短按一次开机，1s内连续短按两次关机.
+
+- 4个LED电量指示灯，1个灯代表25%电量.
+
+- 管理锂电池充放电，使用USB烧录口即可给锂电池充电.
+
+- 输出5V电压，使用AMS1117-3.3V芯片实现降压输出3.3V.
 <br>
 
-## :file_folder:软件架构：
+#### 2、LED闪烁指示灯
+
+- 前两个灯亮表示连接上遥控器
+
+- 后两个灯亮表示定高功能
+
+- 后两个灯灭表示无人机故障
+
+- 后两个灯慢闪表示空闲状态
+
+- 后两个灯快闪表示飞行状态
+<br>
+
+#### 3、按键和摇杆功能
+- 左上按键关机，右上按键短按定高，长按校准摇杆
+- 左摇杆上下为油门，默认最下面值为0，左右为偏航角，默认回中值为500
+- 右摇杆上下为俯仰角，默认回中值为500，左右为翻滚角，默认回中值为500
+<br>
+
+## :file_folder:软件架构
 
 占位符
-
 <br>
 
 ## :star2:实物图
 
 占位符
-
 <br>
 
-## :computer:软件部分设计细节：
+## :computer:软件部分设计细节
+
 #### 1、FreeRTOS操作系统
 
 四轴无人机上同时运行多个功能，必须有一个RTOS（实时操作系统）来处理各个任务的调度，通过移植FreeRTOS操作系统来解决不同任务的调度问题.
@@ -130,34 +158,12 @@ target_link_libraries(freertos_kernel_include
 )
 ```
 <br>
-#### 2、电源管理芯片
-使用IP5305T芯片，实现功能如下:
-1. 短按一次开机，1s内连续短按两次关机.
 
-2. 4个LED电量指示灯，1个灯代表25%电量.
-
-3. 管理锂电池充放电，使用USB烧录口即可给锂电池充电.
-
-4. 输出5V电压，使用AMS1117-3.3V芯片实现降压输出3.3V.
-
-<br>
-#### 3、8520空心杯电机
+#### 2、8520空心杯电机
 
 使用TIM定时器输出PWM波形, 预分频系数4-1, 自动重装值1000-1, 默认比较值200, 默认占空比200/1000 = 20%, PWM频率为72MHz/4 = 18MHz, 周期1000/18MHz =55.56us.
-
 <br>
 
-#### 4、LED闪烁指示灯
-
-1. 前两个灯亮表示连接上遥控器
-
-2. 后两个灯亮表示定高功能
-
-3. 后两个灯灭表示无人机故障
-
-4. 后两个灯慢闪表示空闲状态
-
-5. 后两个灯快闪表示飞行状态
-
+#### 3、SI24R1 2.4G无线通讯
+在写
 <br>
-

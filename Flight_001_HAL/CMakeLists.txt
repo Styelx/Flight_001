@@ -61,6 +61,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         interface/Int_IP5305T.c
         interface/Int_motor.c
         interface/Int_led.c
+        interface/Int_SI24R1.c
 )
 
 # Add include paths

@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
@@ -26,6 +27,7 @@
 /* USER CODE BEGIN Includes */
 #include "com_debug.h"
 #include "App_FreeRTOS_Task.h"
+#include "Int_SI24R1.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -94,10 +96,14 @@ int main(void)
   MX_TIM2_Init();
   MX_TIM3_Init();
   MX_TIM4_Init();
+  MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
 
   //重定向printf打印日志
-  debug_printf("Hello nihao!\n");
+  debug_printf("Hello Flight001!\n");
+
+  //测试SI24R1
+  Int_SI24R1_Init();
 
   //启动FreeRTOS，后续代码不再进行
   App_FreeRTOS_start();
