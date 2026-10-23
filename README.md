@@ -173,8 +173,8 @@ target_link_libraries(freertos_kernel_include
 <br>
 
 #### 4、飞行状态机
-<div align=center>
-	<img src="images\飞行状态机.png" alt="飞行状态机" style="zoom:25%;" />
-	<img src="images\油门状态机.png" alt="油门状态机" style="zoom:25%;" />
+<div style="display:flex;gap:16px">
+	<img src="images\飞行状态机.png" alt="飞行状态机" style="zoom:25%" />
+	<img src="images\油门状态机.png" alt="油门状态机" style="zoom:25%" />
 </div>
 <br>
