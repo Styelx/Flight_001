@@ -58,6 +58,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
         common/com_debug.c
         Application/App_FreeRTOS_Task.c
+        Application/App_receive_data.c
         interface/Int_IP5305T.c
         interface/Int_motor.c
         interface/Int_led.c

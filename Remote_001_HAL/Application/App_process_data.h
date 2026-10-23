@@ -15,7 +15,6 @@ typedef struct {
     int16_t roll;           //横滚角
     uint8_t shutdown;       //开关机指令   1:关机    0:不关机
     uint8_t fix_height;     //定高        1:定高
-
 }Remote_Data;
 
 extern Remote_Data remote_data;

@@ -106,8 +106,8 @@ void App_process_joystick_data(void) {
     taskEXIT_CRITICAL();
 
     //6. ADC数据调整完成
-    debug_printf("thr = %d, yaw = %d, pitch = %d, roll = %d\n",joystick.thr, joystick.yaw, joystick.pitch, joystick.roll);
-
-
-
+    remote_data.thr = joystick.thr;
+    remote_data.yaw = joystick.yaw;
+    remote_data.pitch = joystick.pitch;
+    remote_data.roll = joystick.roll;
 }

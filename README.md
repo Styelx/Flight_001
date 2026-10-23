@@ -4,10 +4,11 @@
   <h1 align="center">STM32四轴无人机</h1>
 
 <div align=center>
-        <img src="https://img.shields.io/badge/version-0.0.5-blue">
+        <img src="https://img.shields.io/badge/version-0.0.6-blue">
         <img src=https://img.shields.io/github/stars/Styelx/Flight_001>
         <img src=https://img.shields.io/badge/OS-FreeRTOS-green>
 </div>
+
 <br>
 
 ## :ledger: Overview
@@ -63,6 +64,8 @@ CMake配置保持默认或自行添加STM32CubeCLT中提供的工具链即可
 #### V0.0.5
 - 手柄按键和摇杆
 - SI24R1双端无线通讯
+#### V0.0.6
+- 飞行状态机
 <br>
 
 ## :bookmark_tabs:硬件功能
@@ -100,7 +103,7 @@ CMake配置保持默认或自行添加STM32CubeCLT中提供的工具链即可
 
 ## :file_folder:软件架构
 
-占位符
+![软件架构](images\软件架构.png)
 <br>
 
 ## :star2:实物图
@@ -165,5 +168,13 @@ target_link_libraries(freertos_kernel_include
 <br>
 
 #### 3、SI24R1 2.4G无线通讯
-在写
+
+发送17字节数据包，前三字节为帧头校验位，设置为字符'C'、'J'、'X'，后四字节设置为一个字宽度的前13字节总和作为校验和，高位先行，综上数据包格式为'C'、'J'、'X'、...、sum[31:24]、sum[23:16]、sum[15:8]、sum[7:0]
+<br>
+
+#### 4、飞行状态机
+<div align=center>
+	<img src="images\飞行状态机.png" alt="飞行状态机" style="zoom:25%;" />
+	<img src="images\油门状态机.png" alt="油门状态机" style="zoom:25%;" />
+</div>
 <br>

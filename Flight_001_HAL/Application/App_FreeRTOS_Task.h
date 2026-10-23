@@ -3,6 +3,7 @@
 
 #include "FreeRTOS.h"
 #include "task.h"
+#include "App_receive_data.h"
 #include "com_config.h"
 #include "com_debug.h"
 #include "Int_IP5305T.h"

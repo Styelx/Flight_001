@@ -18,7 +18,10 @@ LED_Struct right_bottom_led = {LED3_GPIO_Port,LED3_Pin};
 Remote_State remote_state = REMOTE_DISCONNECTED;
 
 //表示当前飞行状态
-Flight_State flight_state = FAIL;
+Flight_State flight_state = IDLE;
+
+//接收到的遥控数据
+Remote_Data remote_data = {0};
 
 //电源管理任务
 void power_task( void * arg );
@@ -82,11 +85,14 @@ void power_task( void * arg ) {
     //获取基准时间
     TickType_t xLastExecutionTime = xTaskGetTickCount();
     while (1) {
-        //每10s执行一次，启动电源防止自动关机
-        vTaskDelayUntil(&xLastExecutionTime,POWER_TASK_PERIOD);
-        //先延时再启动，防止第一次启动时按键抖动导致关机
-        //启动电源
-        Int_IP5305T_start();
+        //等待任务通知,直到 收到通知res=1 或 超时res=0
+        uint32_t res = ulTaskNotifyTake(pdTRUE, POWER_TASK_PERIOD);
+        if (res != 0) {
+            Int_IP5305T_stop();
+        }
+        else {
+            Int_IP5305T_start();
+        }
     }
 }
 
@@ -155,7 +161,7 @@ void led_task( void * arg ) {
             Int_led_turn_on(&left_bottom_led);
             Int_led_turn_on(&right_bottom_led);
         }
-        else if (flight_state == FAIL) {
+        else if (flight_state == FAULT) {
             Int_led_turn_off(&left_bottom_led);
             Int_led_turn_off(&right_bottom_led);
         }
@@ -168,17 +174,26 @@ void led_task( void * arg ) {
     }
 }
 
-uint8_t si24r1_data[TX_PLOAD_WIDTH + 1] = {0};
 
 void si24r1_task( void * arg ) {
     //获取基准时间
     TickType_t xLastExecutionTime = xTaskGetTickCount();
     while (1) {
-        //1. 进入RX模式
-        uint8_t flag = Int_SI24R1_RxPacket(si24r1_data);
-        if (flag == 0) {
-            debug_printf("Receive Successfully:%s\n",si24r1_data);
+        //1. 接收数据 返回0说明连接成功，有收到数据
+        uint8_t res = App_Receive_Data();
+
+        //2. 更新连接状态
+        App_process_connect_state(res);
+
+        //3. 处理关机命令
+        if (remote_data.shutdown ==1) {
+            //使用FreeRTOS直接任务通知,在电源任务中执行关机
+            xTaskNotifyGive(power_task_handler);
         }
+
+        //4. 处理飞行状态 flight_state
+        App_process_flight_state();
+
         //6ms执行一次
         vTaskDelayUntil(&xLastExecutionTime, SI24R1_TASK_PERIOD);
     }

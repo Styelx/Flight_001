@@ -42,6 +42,8 @@ void App_transmit_data(void) {
     transmit_buff[15] = (uint8_t)((sum >> 8) & 0xFFFF);
     transmit_buff[16] = (uint8_t)(sum & 0xFF);
 
+    debug_printf("thr:%d, yaw:%d, pitch:%d, roll:%d, shutdown:%d, fix_height:%d\n",remote_data.thr,remote_data.yaw,remote_data.pitch,remote_data.roll,remote_data.shutdown,remote_data.fix_height);
+
     //2. 发送数据
     Int_SI24R1_TxPacket(transmit_buff);
 
