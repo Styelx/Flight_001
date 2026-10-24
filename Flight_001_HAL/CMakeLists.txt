@@ -57,12 +57,15 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
         common/com_debug.c
+        common/com_filter.c
         Application/App_FreeRTOS_Task.c
         Application/App_receive_data.c
+        Application/App_flight.c
         interface/Int_IP5305T.c
         interface/Int_motor.c
         interface/Int_led.c
         interface/Int_SI24R1.c
+        interface/Int_mpu6050.c
 )
 
 # Add include paths

@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "i2c.h"
 #include "spi.h"
 #include "tim.h"
 #include "usart.h"
@@ -97,12 +98,13 @@ int main(void)
   MX_TIM3_Init();
   MX_TIM4_Init();
   MX_SPI1_Init();
+  MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
 
   //重定向printf打印日志
   debug_printf("Hello Flight001!\n");
 
-  //测试SI24R1
+  //初始化设备
   Int_SI24R1_Init();
 
   //启动FreeRTOS，后续代码不再进行

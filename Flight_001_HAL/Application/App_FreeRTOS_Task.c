@@ -99,27 +99,10 @@ void power_task( void * arg ) {
 void flight_task( void * arg ) {
     //获取基准时间
     TickType_t xLastExecutionTime = xTaskGetTickCount();
+    Int_MPU6050_Init();
     while (1) {
-
-        //1. 设置电机转速
-
-        // left_top_motor.speed = 0;
-        // Int_motor_set_speed(&left_top_motor);
-        //
-        // left_bottom_motor.speed = 0;
-        // Int_motor_set_speed(&left_bottom_motor);
-        //
-        // right_top_motor.speed = 0;
-        // Int_motor_set_speed(&right_top_motor);
-        //
-        // right_bottom_motor.speed = 0;
-        // Int_motor_set_speed(&right_bottom_motor);
-
-        //2. 启动电机
-        // Int_motor_start(&left_top_motor);
-        // Int_motor_start(&left_bottom_motor);
-        // Int_motor_start(&right_top_motor);
-        // Int_motor_start(&right_bottom_motor);
+        //1. 获取三周角速度和加速度
+        App_flight_get_euler_angle();
 
         vTaskDelayUntil(&xLastExecutionTime,FLIGHT_TASK_PERIOD);
     }

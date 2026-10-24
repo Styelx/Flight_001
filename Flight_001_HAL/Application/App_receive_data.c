@@ -48,7 +48,7 @@ uint8_t App_Receive_Data() {
     remote_data.shutdown = rx_buff[11];
     remote_data.fix_height = rx_buff[12];
 
-    debug_printf("thr:%d, yaw:%d, pitch:%d, roll:%d, shutdown:%d, fix_height:%d\n",remote_data.thr,remote_data.yaw,remote_data.pitch,remote_data.roll,remote_data.shutdown,remote_data.fix_height);
+    // debug_printf("thr:%d, yaw:%d, pitch:%d, roll:%d, shutdown:%d, fix_height:%d\n",remote_data.thr,remote_data.yaw,remote_data.pitch,remote_data.roll,remote_data.shutdown,remote_data.fix_height);
     return 0;
 }
 
@@ -133,7 +133,7 @@ void App_process_flight_state(void) {
             if (App_process_unlock() == 0) {
                 flight_state = NORMAL;
                 //解锁后需要重置解锁状态
-                // thr_state = FREE;
+                thr_state = FREE;
             }
             break;
         case NORMAL:

@@ -4,7 +4,7 @@
   <h1 align="center">STM32四轴无人机</h1>
 
 <div align=center>
-        <img src="https://img.shields.io/badge/version-0.0.6-blue">
+        <img src="https://img.shields.io/badge/version-0.0.7-blue">
         <img src=https://img.shields.io/github/stars/Styelx/Flight_001>
         <img src=https://img.shields.io/badge/OS-FreeRTOS-green>
 </div>
@@ -15,7 +15,7 @@
 
 尚硅谷四轴无人机项目：https://www.bilibili.com/video/BV1f8rbBSEq3/
 
-不同的是开发环境使用STM32CubeMX+Clion，默认编译工具为CMake，涉及部分CMake环境配置.
+不同的是开发环境使用STM32CubeMX+Clion, 涉及部分CMake环境配置, 根据实际对代码进行了部分优化. 
 
 该项目仅用来记录个人使用STM32CubeMX+Clion进行STM32开发的练习.
 
@@ -66,6 +66,8 @@ CMake配置保持默认或自行添加STM32CubeCLT中提供的工具链即可
 - SI24R1双端无线通讯
 #### V0.0.6
 - 飞行状态机
+#### V0.0.7
+- MPU6050数据采集及处理
 <br>
 
 ## :bookmark_tabs:硬件功能
@@ -103,7 +105,7 @@ CMake配置保持默认或自行添加STM32CubeCLT中提供的工具链即可
 
 ## :file_folder:软件架构
 
-![软件架构](images\软件架构.png)
+<img src="images\软件架构.png" alt="软件架构" width="400" />
 <br>
 
 ## :star2:实物图
@@ -125,38 +127,29 @@ FreeRTOS直接在官网下载即可：https://wap.freertos.org/
 
 ```cmake
 #./Project/CMakeLists.txt
-#添加FreeRTOS子目录
 add_subdirectory(FreeRTOS)
-#链接子目录下的freertos_kernel库，该库名称默认即为freertos_kernel
 target_link_libraries(${CMAKE_PROJECT_NAME}
         freertos_kernel
 )
 ```
 ```cmake
 #./Project/FreeRTOS/CMakeLists.txt
-#添加freertos_kernel静态库
 add_library(freertos_kernel STATIC
 	...
-	#静态库包含.c文件
 )
-#添加FreeRTOS/include子目录
 add_subdirectory(include)
 ```
 ```cmake
 #./Project/FreeRTOS/include/CMakeLists.txt
-#添加依赖库freertos_kernel_include
 add_library(freertos_kernel_include INTERFACE)
-#后面两句用来处理FreeRTOSConfig.h的配置，默认即可
 target_include_directories(freertos_kernel_include
     INTERFACE
         .
-        #如果不存在freertos_config，则该值为FreeRTOSConfig.h的文件路径
         $<$<NOT:$<TARGET_EXISTS:freertos_config>>:${FREERTOS_CONFIG_FILE_DIRECTORY}>
 )
 
 target_link_libraries(freertos_kernel_include
     INTERFACE
-    	#如果存在freertos_config，则该值为freertos_config，将包含Config.h的库作为依赖
         $<$<TARGET_EXISTS:freertos_config>:freertos_config>
 )
 ```
@@ -169,12 +162,98 @@ target_link_libraries(freertos_kernel_include
 
 #### 3、SI24R1 2.4G无线通讯
 
-发送17字节数据包，前三字节为帧头校验位，设置为字符'C'、'J'、'X'，后四字节设置为一个字宽度的前13字节总和作为校验和，高位先行，综上数据包格式为'C'、'J'、'X'、...、sum[31:24]、sum[23:16]、sum[15:8]、sum[7:0]
+发送17字节数据包，前三字节为帧头校验位，设置为字符'C'、'J'、'X'，后四字节设置为一个字宽度的前13字节总和作为校验和，高位先行，综上数据包格式为'C'、'J'、'X'、...、sum[31:24]、sum[23:16]、sum[15:8]、sum[7:0].
 <br>
 
 #### 4、飞行状态机
-<div style="display:flex;gap:16px">
-	<img src="images\飞行状态机.png" alt="飞行状态机" style="zoom:25%" />
-	<img src="images\油门状态机.png" alt="油门状态机" style="zoom:25%" />
-</div>
+<p float="left">
+	<img src="images\飞行状态机.png" alt="飞行状态机" width="200" />
+	<img src="images\油门状态机.png" alt="油门状态机" width="200" />
+</p>
+<br>
+
+#### 5、MPU6050数据低通滤波
+1. 一阶低通滤波
+
+   角速度波动不大, 采用简单的一阶低通滤波即可
+   
+   ```c
+   int16_t Common_Filter_LowPass(int16_t newValue, int16_t preFilteredValue){
+       return ALPHA * newValue + (1 - ALPHA) * preFilteredValue;
+   }
+   ```
+<p float="left">
+	<img src="images\原始数据.png" alt="角速度原始数据" width="300" />
+	===>
+	<img src="images\一阶低通滤波.png" alt="一阶低通滤波" width="300" />
+</p>
+   
+
+2. **滑动窗口中值滤波**
+  窗口宽度K=5, 即在宽度为5的窗口里取中位数作为当前输出, 例如有输出[2,3,4,5,12,3,4], 对于输出12而言, 选用[2,3,4,5,12]的窗口,使中位数4代替12, 输出就变成[2,3,4,5,4,3,4]该方法可以有效滤去采样时的毛刺, 实测在MPU6050的数据采样中效果显著.
+
+  ```c
+  int16_t median_update(MedianFilter *mf, int16_t new_val) {
+      mf->buf[mf->idx] = new_val;
+      mf->idx = (mf->idx + 1) % MEDIAN_WIN;
+      if (mf->count < MEDIAN_WIN) mf->count++;
+      int16_t tmp[MEDIAN_WIN];
+      for (int i = 0; i < mf->count; i++)
+          tmp[i] = mf->buf[i];
+      for (int i = 1; i < mf->count; i++) {
+          int16_t key = tmp[i];
+          int j = i - 1;
+          while (j >= 0 && tmp[j] > key) {
+              tmp[j + 1] = tmp[j];
+              j--;
+          }
+          tmp[j + 1] = key;
+      }
+      return tmp[mf->count / 2];
+  }
+  ```
+
+<p float="left">
+	<img src="images\原始数据.png" alt="角速度原始数据" width="300" />
+	===>
+	<img src="images\中值滤波.png" alt="中值滤波" width="300" />
+</p>
+
+但存在几个问题：
+- 要想得到好的滤波效果, 噪声不能太多，噪声强度要够大.
+- 采样需要循环执行, 每次采样间隔时间过长, 一个任务周期6ms, 若设置100次采样则一次采样要0.6s,数据太过分散, 这对于高速运行的无人机显然是不可以接受的, 因此该种滤波方式不采用.
+
+3. **卡尔曼滤波**
+
+  加速度量程小, 波动较大, 需要采取更稳定的滤波算法.
+
+  根据方差计算每次输出的加权系数, 将各个输出的权重加起来作为当前输出.
+
+  ```c
+  typedef struct {
+      float LastP; // 上一时刻的状态方差（或协方差）
+      float Now_P; // 当前时刻的状态方差（或协方差）
+      float out;   // 滤波器的输出值，即估计的状态
+      float Kg;    // 卡尔曼增益，用于调节预测值和测量值之间的权重
+      float Q;     // 过程噪声的方差，反映系统模型的不确定性
+      float R;     // 测量噪声的方差，反映测量过程的不确定性
+  } KalmanFilter_Struct;
+  KalmanFilter_Struct kfs[3] = {
+      {0.02, 0, 0, 0, 0.001, 0.543},
+      {0.02, 0, 0, 0, 0.001, 0.543},
+      {0.02, 0, 0, 0, 0.001, 0.543}
+  };
+  double Common_Filter_KalmanFilter(KalmanFilter_Struct *kf, double input) {
+      kf->Now_P = kf->LastP + kf->Q;
+      kf->Kg = kf->Now_P / (kf->Now_P + kf->R);
+      kf->out = kf->out + kf->Kg * (input - kf->out);
+      kf->LastP = (1 - kf->Kg) * kf->Now_P;
+      return kf->out;
+  }
+  ```
+<p float="left">
+	<img src="images\加速度原始数据.png" alt="加速度原始数据" width="300" />
+	===>
+	<img src="images\卡尔曼滤波.png" alt="卡尔曼滤波" width="300" />
+</p>
 <br>
