@@ -12,6 +12,7 @@
 #ifdef DEBUG
 
 #define FILE_NAME   (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
+//debug方法有问题,短时间内不能连读debug_printf两次
 #define debug_printf(format, ...) printf("[%s:%d]:" format, FILE_NAME, __LINE__, ##__VA_ARGS__)
 
 #else

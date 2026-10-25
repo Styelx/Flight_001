@@ -2,11 +2,6 @@
 
 //STM32F103C8T6 SRAM 20k => FreeRTOS 12k
 
-//电机结构体定义
-Motor_Struct left_top_motor = {&htim3, TIM_CHANNEL_1, 200};
-Motor_Struct left_bottom_motor = {&htim4, TIM_CHANNEL_4, 200};
-Motor_Struct right_top_motor = {&htim2, TIM_CHANNEL_2, 200};
-Motor_Struct right_bottom_motor = {&htim1, TIM_CHANNEL_3, 200};
 
 //LED结构体定义
 LED_Struct left_top_led = {LED1_GPIO_Port,LED1_Pin};
@@ -21,7 +16,7 @@ Remote_State remote_state = REMOTE_DISCONNECTED;
 Flight_State flight_state = IDLE;
 
 //接收到的遥控数据
-Remote_Data remote_data = {0};
+Remote_Data remote_data = {.thr = 0, .yaw = 500, .pitch = 500, .roll = 500, .shutdown = 0, .fix_height = 0};
 
 //电源管理任务
 void power_task( void * arg );
@@ -31,7 +26,7 @@ void power_task( void * arg );
 #define POWER_TASK_PRIO 4
 TaskHandle_t power_task_handler;
 //任务周期
-#define POWER_TASK_PERIOD 10000
+#define POWER_TASK_PERIOD 5000
 
 
 //电机飞行控制任务
@@ -82,11 +77,10 @@ void App_FreeRTOS_start(void) {
 }
 
 void power_task( void * arg ) {
-    //获取基准时间
-    TickType_t xLastExecutionTime = xTaskGetTickCount();
     while (1) {
         //等待任务通知,直到 收到通知res=1 或 超时res=0
-        uint32_t res = ulTaskNotifyTake(pdTRUE, POWER_TASK_PERIOD);
+        uint32_t res = 0;
+        res = ulTaskNotifyTake(pdTRUE, POWER_TASK_PERIOD);
         if (res != 0) {
             Int_IP5305T_stop();
         }
@@ -99,16 +93,23 @@ void power_task( void * arg ) {
 void flight_task( void * arg ) {
     //获取基准时间
     TickType_t xLastExecutionTime = xTaskGetTickCount();
-    Int_MPU6050_Init();
+
     while (1) {
-        //1. 获取三周角速度和加速度
-        App_flight_get_euler_angle();
+        //1. 获取三周角速度和加速度,计算出欧拉角测量值
+        App_flight_gyro_accel_euler();
+
+        //2. 根据当前欧拉角 计算PID
+        App_pid_process();
+
+        //3. 根据PID结果对电机控制
+        App_flight_control_motor();
 
         vTaskDelayUntil(&xLastExecutionTime,FLIGHT_TASK_PERIOD);
     }
 }
 
 void led_task( void * arg ) {
+    //获取基准时间
     TickType_t xLastExecutionTime = xTaskGetTickCount();
     uint8_t count = 0;
     while (1) {
@@ -169,7 +170,7 @@ void si24r1_task( void * arg ) {
         App_process_connect_state(res);
 
         //3. 处理关机命令
-        if (remote_data.shutdown ==1) {
+        if (remote_data.shutdown == 1) {
             //使用FreeRTOS直接任务通知,在电源任务中执行关机
             xTaskNotifyGive(power_task_handler);
         }

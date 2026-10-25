@@ -56,23 +56,23 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
-        common/com_debug.c
-        common/com_tool.c
-        Application/App_FreeRTOS_Task.c
-        Application/App_process_data.c
-        Application/App_transmit_data.c
-        interface/Int_IP5305T.c
-        interface/Int_SI24R1.c
-        interface/Int_KEY.c
-        interface/Int_joystick.c
+        User/common/com_debug.c
+        User/common/com_tool.c
+        User/Application/App_FreeRTOS_Task.c
+        User/Application/App_process_data.c
+        User/Application/App_transmit_data.c
+        User/interface/Int_IP5305T.c
+        User/interface/Int_SI24R1.c
+        User/interface/Int_KEY.c
+        User/interface/Int_joystick.c
 )
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
-        common
-        Application
-        interface
+        User/common
+        User/Application
+        User/interface
 )
 
 # Add project symbols (macros)

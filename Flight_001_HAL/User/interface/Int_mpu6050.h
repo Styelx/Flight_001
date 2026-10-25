@@ -16,7 +16,7 @@
 
 //MPU6050寄存器地址
 #define SMPRT_DIV 0x19
-#define CONFIG 0x1A
+#define CONFIG_6050 0x1A
 #define GYRO_CONFIG 0x1B
 #define ACCEL_CONFIG 0x1C
 #define INT_ENABLE 0x38

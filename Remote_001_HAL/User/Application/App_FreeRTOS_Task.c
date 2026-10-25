@@ -11,7 +11,7 @@ void power_task( void * arg );
 //任务优先级,范围0-4，数值越大优先级越大
 #define POWER_TASK_PRIO 4
 TaskHandle_t power_task_handler;
-#define POWER_TASK_PERIOD 10000
+#define POWER_TASK_PERIOD 5000
 
 //SI24R1通讯任务
 void si24r1_task( void * arg );

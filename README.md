@@ -4,7 +4,7 @@
   <h1 align="center">STM32四轴无人机</h1>
 
 <div align=center>
-        <img src="https://img.shields.io/badge/version-0.0.7-blue">
+        <img src="https://img.shields.io/badge/version-0.1.1-blue">
         <img src=https://img.shields.io/github/stars/Styelx/Flight_001>
         <img src=https://img.shields.io/badge/OS-FreeRTOS-green>
 </div>
@@ -15,9 +15,9 @@
 
 尚硅谷四轴无人机项目：https://www.bilibili.com/video/BV1f8rbBSEq3/
 
-不同的是开发环境使用STM32CubeMX+Clion, 涉及部分CMake环境配置, 根据实际对代码进行了部分优化. 
+开发环境使用STM32CubeMX+Clion, 需要有CMake环境配置经验, 同时根据实际对代码进行了部分优化. 
 
-该项目仅用来记录个人使用STM32CubeMX+Clion进行STM32开发的练习.
+该项目仅为记录个人使用STM32CubeMX+Clion进行STM32开发的练习.
 
 <br>
 
@@ -50,24 +50,16 @@ CMake配置保持默认或自行添加STM32CubeCLT中提供的工具链即可
 <br>
 
 ## :rocket: 增加的功能说明
-
-#### V0.0.1
-- 添加原理图和PCB
-#### V0.0.2
-- 移植FreeRTOS操作系统
-- 添加README.md文件
-#### V0.0.3
-- 添加电源管理系统
-#### V0.0.4
-- 基础电机控制
-- LED灯状态指示
-#### V0.0.5
-- 手柄按键和摇杆
-- SI24R1双端无线通讯
-#### V0.0.6
-- 飞行状态机
-#### V0.0.7
-- MPU6050数据采集及处理
+### V0.0
+- V0.0.1  添加原理图和PCB
+- V0.0.2  移植FreeRTOS操作系统  添加README.md文件
+- V0.0.3  添加电源管理系统
+- V0.0.4  基础电机控制  LED灯状态指示
+- V0.0.5  手柄按键和摇杆  SI24R1双端无线通讯
+- V0.0.6  飞行状态机
+- V0.0.7  MPU6050数据采集及处理
+### V0.1
+- V0.1.1  PID控制  电源bug修复  优化项目架构
 <br>
 
 ## :bookmark_tabs:硬件功能
@@ -82,6 +74,7 @@ CMake配置保持默认或自行添加STM32CubeCLT中提供的工具链即可
 - 管理锂电池充放电，使用USB烧录口即可给锂电池充电.
 
 - 输出5V电压，使用AMS1117-3.3V芯片实现降压输出3.3V.
+**PS:本机所采用的型号为IP5305T-8S芯片,与常规芯片不同的是自动关机时间更短，待机8s直接关机，因此需要调整电源管理任务时长(实测在5s-7s最好)**
 <br>
 
 #### 2、LED闪烁指示灯
@@ -108,11 +101,6 @@ CMake配置保持默认或自行添加STM32CubeCLT中提供的工具链即可
 <img src="images\软件架构.png" alt="软件架构" width="400" />
 <br>
 
-## :star2:实物图
-
-占位符
-<br>
-
 ## :computer:软件部分设计细节
 
 #### 1、FreeRTOS操作系统
@@ -121,9 +109,7 @@ CMake配置保持默认或自行添加STM32CubeCLT中提供的工具链即可
 
 FreeRTOS直接在官网下载即可：https://wap.freertos.org/
 
-本项目选择版本为202406.05，移植系统只需内核文件夹`FreeRTOS-Kernel`中的内容，将必需文件复制粘贴的项目路径即可，CMake的配置则稍微麻烦，具体操作可以参照提供的examples，这里只给出示例代码
-
-**Ps:也可以直接交给agent进行配置**
+本项目选择版本为202406.05，移植系统只需内核文件夹`FreeRTOS-Kernel`中的内容，将必需文件复制粘贴的项目路径即可，CMake的配置可以直接交给ai，只需要注意`FreeRTOSconfig.h`文件的位置
 
 ```cmake
 #./Project/CMakeLists.txt
@@ -256,4 +242,47 @@ target_link_libraries(freertos_kernel_include
 	===>
 	<img src="images\卡尔曼滤波.png" alt="卡尔曼滤波" width="300" />
 </p>
+<br>
+
+#### 6、姿态解算
+1. **角速度积分(偏航角)**
+$$
+\theta = \int_a^b \omega(t)\,dt
+$$
+
+2. **加速度解算(俯仰角/横滚角)**
+$$
+\tan\theta = \frac{a_x}{a_z}\ or\ \frac{a_y}{a_z}
+$$
+
+3. **四元数姿态解算**
+   $$
+   p = a+bi+cj+dk
+   $$
+
+   $$
+   v^*=pvp^{-1}
+   $$
+
+   虽说理论精度高, 但感觉精度和稳定性还不如互补......
+
+   而且四元数大量使用浮点型计算, FreeRTOS任务栈溢出的风险极高, 我在调试的时候必须把任务栈大小从128字拓展到256字才能正常运行, 因此我没有使用四元数姿态解算
+   
+   具体计算方法放在`common\com_imu.c`里了
+   <br>
+
+#### 7、串级PID控制
+外环角度——>内环角速度
+
+外环角度测量值由姿态解算得出, 内环角速度由MPU6050测量得出.
+
+内环采用比例, 微分控制, 外环只取比例, 不使用积分项是因为电机转速有上限, 要是一阵风吹来, 可能需要的修正量远大于电机承载能力, 使得误差始终无法消除, 积分项就会不断累积.
+
+具体参数见代码(PID参数随所处环境和无人机实际状况而定,代码中所使用参数仅为个人理解)
+
+调参过程有以下几点注意事项:
+
+1. 通过无线接收的处理后的摇杆数据范围(0,1000), 需要根据对应油门和欧拉角进行转换
+2. 调参时先调内环角速度, 再调外环角度. 
+3. 选择参数时要注意极性, 即PID系数的正负, 实际上在试飞的时候就能看出来参数的正负, 如果参数极性相反的话试飞结果会与预期结果正好相反
 <br>

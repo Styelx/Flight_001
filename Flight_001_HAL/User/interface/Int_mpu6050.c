@@ -50,7 +50,7 @@ void Int_MPU6050_calculate_offset(void) {
             count = 0;
         }
         data_last = data_current;
-        vTaskDelay(6);
+        HAL_Delay(6);
     }
 
     //2. 此时飞机已经平稳
@@ -77,7 +77,7 @@ void Int_MPU6050_calculate_offset(void) {
         accel_y_sum += (gyro_accel_data.accel_data.accel_y - 0);
         accel_z_sum += (gyro_accel_data.accel_data.accel_z - 16384);
 
-        vTaskDelay(6);
+        HAL_Delay(6);
     }
     gyro_x_offset = gyro_x_sum / 100;
     gyro_y_offset = gyro_y_sum / 100;
@@ -114,7 +114,7 @@ void Int_MPU6050_Init(void) {
     //7. 设置采样频率 Fs > 2Fm  Fm = 1/(6ms)
     //角速度低通滤波184Hz,加速度低通滤波188Hz
     Int_MPU6050_Write_Reg(SMPRT_DIV,0x01);
-    Int_MPU6050_Write_Reg(CONFIG,0x01);
+    Int_MPU6050_Write_Reg(CONFIG_6050,0x01);
     //8. 设置X陀螺仪轴为参考时钟
     Int_MPU6050_Write_Reg(PWR_MGMT_1,0x01);
 
@@ -152,8 +152,6 @@ void Int_MPU6050_Get_Gyro(Gyroscope_Data *gyroscope_data) {
 
 /****************************
  *@function:读取角加速度
- *
- *
  ****************************/
 void Int_MPU6050_Get_Accel(Accelerometer_Data *accelerometer_data) {
     uint8_t high = 0;

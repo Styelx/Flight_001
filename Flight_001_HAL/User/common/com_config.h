@@ -39,9 +39,9 @@ typedef struct {
 
 //MPU6050角速度
 typedef struct {
-    int16_t gyro_x;     //向右飞为正     横滚角
-    int16_t gyro_y;     //向前飞为正     俯仰角
-    int16_t gyro_z;     //逆时针为正     偏航角
+    int16_t gyro_x;     //向右飞为正             横滚角
+    int16_t gyro_y;     //向前飞为正             俯仰角
+    int16_t gyro_z;     //从上往下看逆时针为正     偏航角
 }Gyroscope_Data;
 
 //MPU6050角加速度
