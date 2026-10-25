@@ -4,10 +4,11 @@
   <h1 align="center">STM32四轴无人机</h1>
 
 <div align=center>
-        <img src="https://img.shields.io/badge/version-0.1.1-blue">
+        <img src="https://img.shields.io/badge/version-0.1.2-blue">
         <img src=https://img.shields.io/github/stars/Styelx/Flight_001>
         <img src=https://img.shields.io/badge/OS-FreeRTOS-green>
 </div>
+
 
 <br>
 
@@ -50,6 +51,7 @@ CMake配置保持默认或自行添加STM32CubeCLT中提供的工具链即可
 <br>
 
 ## :rocket: 增加的功能说明
+
 ### V0.0
 - V0.0.1  添加原理图和PCB
 - V0.0.2  移植FreeRTOS操作系统  添加README.md文件
@@ -60,11 +62,13 @@ CMake配置保持默认或自行添加STM32CubeCLT中提供的工具链即可
 - V0.0.7  MPU6050数据采集及处理
 ### V0.1
 - V0.1.1  PID控制  电源bug修复  优化项目架构
+- V0.1.2  定高功能  故障处理
 <br>
 
 ## :bookmark_tabs:硬件功能
 
 #### 1、电源管理芯片
+
 使用IP5305T芯片，实现功能如下:
 
 - 短按一次开机，1s内连续短按两次关机.
@@ -74,6 +78,7 @@ CMake配置保持默认或自行添加STM32CubeCLT中提供的工具链即可
 - 管理锂电池充放电，使用USB烧录口即可给锂电池充电.
 
 - 输出5V电压，使用AMS1117-3.3V芯片实现降压输出3.3V.
+
 **PS:本机所采用的型号为IP5305T-8S芯片,与常规芯片不同的是自动关机时间更短，待机8s直接关机，因此需要调整电源管理任务时长(实测在5s-7s最好)**
 <br>
 
@@ -91,9 +96,16 @@ CMake配置保持默认或自行添加STM32CubeCLT中提供的工具链即可
 <br>
 
 #### 3、按键和摇杆功能
+
 - 左上按键关机，右上按键短按定高，长按校准摇杆
+
 - 左摇杆上下为油门，默认最下面值为0，左右为偏航角，默认回中值为500
+
 - 右摇杆上下为俯仰角，默认回中值为500，左右为翻滚角，默认回中值为500
+
+#### 4、VL5305激光测距仪
+
+- 通过激光测距和PID控制实现定高
 <br>
 
 ## :file_folder:软件架构
@@ -152,6 +164,7 @@ target_link_libraries(freertos_kernel_include
 <br>
 
 #### 4、飞行状态机
+
 <p float="left">
 	<img src="images\飞行状态机.png" alt="飞行状态机" width="200" />
 	<img src="images\油门状态机.png" alt="油门状态机" width="200" />
@@ -159,7 +172,8 @@ target_link_libraries(freertos_kernel_include
 <br>
 
 #### 5、MPU6050数据低通滤波
-1. 一阶低通滤波
+
+1. **一阶低通滤波**
 
    角速度波动不大, 采用简单的一阶低通滤波即可
    
@@ -245,6 +259,7 @@ target_link_libraries(freertos_kernel_include
 <br>
 
 #### 6、姿态解算
+
 1. **角速度积分(偏航角)**
 
 $$
@@ -277,6 +292,7 @@ $$
    <br>
 
 #### 7、串级PID控制
+
 外环角度——>内环角速度
 
 外环角度测量值由姿态解算得出, 内环角速度由MPU6050测量得出.
@@ -291,3 +307,24 @@ $$
 2. 调参时先调内环角速度, 再调外环角度. 
 3. 选择参数时要注意极性, 即PID系数的正负, 实际上在试飞的时候就能看出来参数的正负, 如果参数极性相反的话试飞结果会与预期结果正好相反
 <br>
+
+#### 8、定高功能
+
+通过激光测距模块实现, 驱动可以移植VL5305激光测距仪的官方驱动, 但需要修改一部分代码:
+
+STM32使用小端序(低八位在前), VL5305使用大端序(高八位在前), 需要将原驱动读写修改一下
+
+```c
+int8_t VL53L1_WrWord(uint16_t dev, uint16_t index, uint16_t data){
+	uint8_t data_buf[2] = {0};
+	data_buf[0] = data >> 8;
+	data_buf[1] = data & 0xFF;
+	HAL_I2C_Mem_Write(&hi2c2, dev, index, I2C_MEMADD_SIZE_16BIT, data_buf, 2, 1000);
+	return 0;
+}
+int8_t VL53L1_RdByte(uint16_t dev, uint16_t index, uint8_t *data){
+	HAL_I2C_Mem_Read(&hi2c2, dev, index, I2C_MEMADD_SIZE_16BIT, data, 1, 1000);
+	return 0;
+}
+```
+

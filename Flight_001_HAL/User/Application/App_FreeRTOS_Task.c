@@ -18,6 +18,9 @@ Flight_State flight_state = IDLE;
 //接收到的遥控数据
 Remote_Data remote_data = {.thr = 0, .yaw = 500, .pitch = 500, .roll = 500, .shutdown = 0, .fix_height = 0};
 
+//定高高度
+uint16_t flight_height = 0;
+
 //电源管理任务
 void power_task( void * arg );
 //任务所占空间128 * 4 = 512 Byte
@@ -93,7 +96,7 @@ void power_task( void * arg ) {
 void flight_task( void * arg ) {
     //获取基准时间
     TickType_t xLastExecutionTime = xTaskGetTickCount();
-
+    uint8_t count = 0;
     while (1) {
         //1. 获取三周角速度和加速度,计算出欧拉角测量值
         App_flight_gyro_accel_euler();
@@ -101,7 +104,17 @@ void flight_task( void * arg ) {
         //2. 根据当前欧拉角 计算PID
         App_pid_process();
 
-        //3. 根据PID结果对电机控制
+        //3. 判断定高
+        //激光测距20ms才采集一次数据,需要和任务周期对应上,因此四次任务周期进入一次if
+        if (flight_state == FIX_HEIGHT) {
+            count++;
+            if (count >= 4) {
+                App_flight_fix_height();
+                count = 0;
+            }
+        }
+
+        //4. 根据PID结果对电机控制
         App_flight_control_motor();
 
         vTaskDelayUntil(&xLastExecutionTime,FLIGHT_TASK_PERIOD);

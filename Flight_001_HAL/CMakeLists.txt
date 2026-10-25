@@ -68,6 +68,10 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         User/interface/Int_led.c
         User/interface/Int_SI24R1.c
         User/interface/Int_mpu6050.c
+        User/interface/fix_height/Int_VL53L1X.c
+        User/interface/fix_height/vl53l1_platform.c
+        User/interface/fix_height/VL53L1X_api.c
+        User/interface/fix_height/VL53L1X_calibration.c
 )
 
 # Add include paths
@@ -76,6 +80,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         User/common
         User/Application
         User/interface
+        User/interface/fix_height
 )
 
 # Add project symbols (macros)

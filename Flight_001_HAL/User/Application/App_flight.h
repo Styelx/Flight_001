@@ -11,6 +11,7 @@
 #include "com_pid.h"
 #include "Int_mpu6050.h"
 #include "Int_motor.h"
+#include "Int_VL53L1X.h"
 
 
 /*****************************
@@ -32,5 +33,10 @@ void App_pid_process(void);
  *@function:根据PID输出控制电机
  *****************************/
 void App_flight_control_motor(void);
+
+/*****************************
+ *@function:定高功能PID
+ *****************************/
+void App_flight_fix_height(void);
 
 #endif //FLIGHT_001_HAL_APP_FLIGHT_H

@@ -7,15 +7,18 @@ Euler_Data euler_data = {0};
 Gyroscope_Data last_gyro_data = {0};
 float euler_yaw_sum = 0.0f;
 
+extern TaskHandle_t si24r1_task_handler;
+
 extern Remote_Data remote_data;
 extern Flight_State flight_state;
+extern uint16_t flight_height;
 
 //外环和内环均用pd 因为电机有速度上限 如果电机推力不足以抵消误差 误差会在积分项上一直累积 产生积分饱和
 //先调节内环角速度  再调节外环角度
 
 //偏航角 俯仰角 横滚角
-//极性为正
-Pid_Struct yaw_pid = {.kp = 5.0f,.ki = 0.0f,.kd = 0.0f, .last_error = 0.0f};
+//极性为负
+Pid_Struct yaw_pid = {.kp = -3.0f,.ki = 0.0f,.kd = 0.0f, .last_error = 0.0f};
 //极性为正
 Pid_Struct pitch_pid = {.kp = 5.0f,.ki = 0.0f,.kd = 0.0f, .last_error = 0.0f};
 //极性为正
@@ -23,15 +26,16 @@ Pid_Struct roll_pid = {.kp = 5.0f,.ki = 0.0f,.kd = 0.0f, .last_error = 0.0f};
 
 //z轴角速度 y轴角速度 x轴角速度
 //调参数时先将外环设置为0,现象往一个方向倾斜时能明显感觉到风扇有反方向的推力
-//极性为正
-Pid_Struct gyro_z_pid = {.kp = 5.0f,.ki = 0.0f,.kd = 0.0f, .last_error = 0.0f};
-
-//极性为正
-Pid_Struct gyro_y_pid = {.kp = 3.0f,.ki = 0.0f,.kd = 0.2f, .last_error = 0.0f};
-
 //极性为负
-Pid_Struct gyro_x_pid = {.kp = 3.0f,.ki = 0.0f,.kd = 0.2f, .last_error = 0.0f};
+Pid_Struct gyro_z_pid = {.kp = -5.0f,.ki = 0.0f,.kd = 0.0f, .last_error = 0.0f};
+//极性为正
+Pid_Struct gyro_y_pid = {.kp = 3.0f,.ki = 0.0f,.kd = 0.02f, .last_error = 0.0f};
+//极性为负
+Pid_Struct gyro_x_pid = {.kp = 3.0f,.ki = 0.0f,.kd = 0.02f, .last_error = 0.0f};
 
+
+//定高PID
+Pid_Struct fix_height_pid = {.kp = -0.6f,.ki = 0.0f,.kd = -0.02f, .last_error = 0.0f};
 
 
 //电机结构体定义
@@ -52,6 +56,9 @@ void App_flight_Init(void) {
     Int_motor_start(&right_top_motor);
     Int_motor_start(&left_bottom_motor);
     Int_motor_start(&right_bottom_motor);
+
+    //初始化激光测距仪
+    Int_VL53L1X_Init();
 }
 
 /*****************************
@@ -184,8 +191,21 @@ void App_flight_control_motor(void) {
             right_bottom_motor.speed = remote_data.thr - gyro_y_pid.output + gyro_x_pid.output + gyro_z_pid.output;
             break;
         case FIX_HEIGHT:
+            left_top_motor.speed = remote_data.thr + gyro_y_pid.output - gyro_x_pid.output + gyro_z_pid.output + fix_height_pid.output;
+            right_top_motor.speed = remote_data.thr + gyro_y_pid.output + gyro_x_pid.output - gyro_z_pid.output + fix_height_pid.output;
+            left_bottom_motor.speed = remote_data.thr - gyro_y_pid.output - gyro_x_pid.output - gyro_z_pid.output + fix_height_pid.output;
+            right_bottom_motor.speed = remote_data.thr - gyro_y_pid.output + gyro_x_pid.output + gyro_z_pid.output + fix_height_pid.output;
             break;
         case FAULT:
+            //任务每6ms执行一次,每次执行任务降低2点速度
+            left_bottom_motor.speed -= 2;
+            left_top_motor.speed -= 2;
+            right_top_motor.speed -= 2;
+            right_bottom_motor.speed -= 2;
+            if (left_bottom_motor.speed <= 0 && right_bottom_motor.speed <= 0
+                && left_top_motor.speed <= 0 && right_bottom_motor.speed <= 0) {
+                xTaskNotifyGive(si24r1_task_handler);
+            }
             break;
     }
     //限制电机速度上限 防止过热
@@ -208,4 +228,13 @@ void App_flight_control_motor(void) {
     Int_motor_set_speed(&right_bottom_motor);
     Int_motor_set_speed(&left_bottom_motor);
 
+}
+
+/*****************************
+ *@function:定高功能PID
+ *****************************/
+void App_flight_fix_height(void) {
+    fix_height_pid.desire =  flight_height;
+    fix_height_pid.measure = Int_VL53L1X_GetDistance();
+    Com_PID_Calculate(&fix_height_pid);
 }

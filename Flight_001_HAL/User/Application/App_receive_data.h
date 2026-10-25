@@ -6,6 +6,7 @@
 #include "Int_SI24R1.h"
 #include "com_config.h"
 #include "com_debug.h"
+#include "Int_VL53L1X.h"
 
 //帧头校验位
 #define FRAME_HEAD_CHECK_1 'C'

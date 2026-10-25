@@ -6,6 +6,8 @@ extern Remote_Data remote_data;
 extern Remote_State remote_state;
 extern Flight_State flight_state;
 
+extern uint16_t flight_height;
+
 THR_STATE thr_state = FREE;
 TickType_t enter_time = 0;
 TickType_t leave_time = 0;
@@ -152,6 +154,9 @@ void App_process_flight_state(void) {
             if (remote_data.fix_height == 1) {
                 flight_state = NORMAL;
                 remote_data.fix_height = 0;
+
+                //记录下当前高度
+                flight_height = Int_VL53L1X_GetDistance();
             }
             //FIX_HEIGHT->FAULT
             if (remote_state == REMOTE_DISCONNECTED) {
@@ -160,7 +165,8 @@ void App_process_flight_state(void) {
             break;
         case FAULT:
             //处理失联故障,缓慢停止电机降落
-            vTaskDelay(1);
+            //一直等待通知, 由飞行任务通知
+            ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
             flight_state = IDLE;
             break;
     }
