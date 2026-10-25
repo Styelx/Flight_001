@@ -246,11 +246,13 @@ target_link_libraries(freertos_kernel_include
 
 #### 6、姿态解算
 1. **角速度积分(偏航角)**
+
 $$
 \theta = \int_a^b \omega(t)\,dt
 $$
 
 2. **加速度解算(俯仰角/横滚角)**
+
 $$
 \tan\theta = \frac{a_x}{a_z}\ or\ \frac{a_y}{a_z}
 $$
@@ -259,13 +261,13 @@ $$
    $$
    p = a+bi+cj+dk
    $$
-
+   
    $$
    v^*=pvp^{-1}
    $$
-
+   
    虽说理论精度高, 但感觉精度和稳定性还不如互补......
-
+   
    而且四元数大量使用浮点型计算, FreeRTOS任务栈溢出的风险极高, 我在调试的时候必须把任务栈大小从128字拓展到256字才能正常运行, 因此我没有使用四元数姿态解算
    
    具体计算方法放在`common\com_imu.c`里了
