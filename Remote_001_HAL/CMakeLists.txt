@@ -61,10 +61,13 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         User/Application/App_FreeRTOS_Task.c
         User/Application/App_process_data.c
         User/Application/App_transmit_data.c
+        User/Application/App_oled.c
         User/interface/Int_IP5305T.c
         User/interface/Int_SI24R1.c
         User/interface/Int_KEY.c
         User/interface/Int_joystick.c
+        User/interface/OLED/Inf_font.c
+        User/interface/OLED/Inf_OLED.c
 )
 
 # Add include paths
@@ -73,6 +76,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         User/common
         User/Application
         User/interface
+        User/interface/OLED
 )
 
 # Add project symbols (macros)

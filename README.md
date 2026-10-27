@@ -1,13 +1,13 @@
 <p align="right">
-  <b>中文</b> | <a href="./README_Eng.md">English</a> 
 </p>
   <h1 align="center">STM32四轴无人机</h1>
 
 <div align=center>
-        <img src="https://img.shields.io/badge/version-0.1.2-blue">
+        <img src="https://img.shields.io/badge/version-0.1.3-blue">
         <img src=https://img.shields.io/github/stars/Styelx/Flight_001>
         <img src=https://img.shields.io/badge/OS-FreeRTOS-green>
 </div>
+
 
 
 <br>
@@ -63,6 +63,7 @@ CMake配置保持默认或自行添加STM32CubeCLT中提供的工具链即可
 ### V0.1
 - V0.1.1  PID控制  电源bug修复  优化项目架构
 - V0.1.2  定高功能  故障处理
+- V0.1.3   添加演示视频 控制器屏幕显示
 <br>
 
 ## :bookmark_tabs:硬件功能
@@ -286,7 +287,9 @@ $$
 
    虽说理论精度高, 但感觉精度和稳定性还不如互补......
 
-   而且四元数大量使用浮点型计算, FreeRTOS任务栈溢出的风险极高, 我在调试的时候必须把任务栈大小从128字拓展到256字才能正常运行, 因此我没有使用四元数姿态解算
+   而且四元数大量使用浮点型计算, FreeRTOS任务栈溢出的风险极高, 我在调试的时候必须把任务栈大小从128字拓展到256字才能正常运行, 因此我没有使用四元数姿态解算.
+
+   因为MPU6050本身测量精度的问题, 在计算偏航角时始终会有消除不掉的1°误差在累加.
 
    具体计算方法放在`common\com_imu.c`里了
    <br>
@@ -304,9 +307,34 @@ $$
 调参过程有以下几点注意事项:
 
 1. 通过无线接收的处理后的摇杆数据范围(0,1000), 需要根据对应油门和欧拉角进行转换
+
 2. 调参时先调内环角速度, 再调外环角度. 
+
 3. 选择参数时要注意极性, 即PID系数的正负, 实际上在试飞的时候就能看出来参数的正负, 如果参数极性相反的话试飞结果会与预期结果正好相反
-<br>
+
+4. 起飞后总是朝一侧偏可能和机身重心有关, 无人机重量较轻, 重心偏一点都会偏航
+
+5. 该参数仅供参考, 实测此参数抗干扰能力较弱, 在室外稍微有一点风就飞不稳 
+```c
+//偏航角 俯仰角 横滚角
+//极性为负 -3.0  0.0  0.0
+Pid_Struct yaw_pid = {.kp = -3.0f,.ki = 0.0f,.kd = 0.0f, .last_error = 0.0f};
+//极性为正 1.6  0.1  0.002
+Pid_Struct pitch_pid = {.kp = 1.6f,.ki = 0.1f,.kd = 0.002f, .last_error = 0.0f};
+//极性为正 1.6  0.1  0.002
+Pid_Struct roll_pid = {.kp = 1.6f,.ki = 0.1f ,.kd = 0.002f, .last_error = 0.0f};
+
+//z轴角速度 y轴角速度 x轴角速度
+//调参数时先将外环设置为0,现象往一个方向倾斜时能明显感觉到风扇有反方向的推力
+//极性为负 -5.0  0.0  0.0
+Pid_Struct gyro_z_pid = {.kp = -5.0f,.ki = 0.0f,.kd = 0.0f, .last_error = 0.0f};
+//极性为正 2.4  0.0  0.08
+Pid_Struct gyro_y_pid = {.kp = 2.4f,.ki = 0.0f,.kd = 0.08f, .last_error = 0.0f};
+//极性为正 2.4  0.0  0.08
+Pid_Struct gyro_x_pid = {.kp = 2.4f,.ki = 0.0f,.kd = 0.08f, .last_error = 0.0f};
+```
+
+  <br>
 
 #### 8、定高功能
 
@@ -327,4 +355,19 @@ int8_t VL53L1_RdByte(uint16_t dev, uint16_t index, uint8_t *data){
 	return 0;
 }
 ```
+<br>
+
+#### 9、遥控器屏幕显示
+
+直接调用现成的字库显示字符即可
+
+在显示进度条时把100%进度条分成两个字符来表示
+
+小于500时第二个字符留空,第一个字符填对应字库进度条
+
+大于500时第一个字符涂满,第二个字符填对应字库进度条
+
+<div align=left>
+	<img src="images\屏幕显示.jpg" alt="屏幕显示" width="300" />
+</dic>
 

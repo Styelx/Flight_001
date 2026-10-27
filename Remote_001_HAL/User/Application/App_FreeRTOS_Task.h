@@ -8,11 +8,11 @@
 #include "Int_SI24R1.h"
 #include "App_process_data.h"
 #include "App_transmit_data.h"
+#include "App_oled.h"
 
-/*
+/*********************
  *@启动FreeRTOS
- *
- */
+ *********************/
 
 void App_FreeRTOS_start(void);
 

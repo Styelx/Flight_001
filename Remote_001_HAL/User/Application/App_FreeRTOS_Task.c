@@ -40,10 +40,18 @@ void joystick_task( void * arg );
 TaskHandle_t joystick_task_handler;
 #define JOYSTICK_TASK_PERIOD 20
 
-/*
+//屏幕任务
+void oled_task( void * arg );
+//任务所占空间128 * 4 = 512 Byte
+#define OLED_TASK_STACK_SIZE 128
+//任务优先级,范围0-4，数值越大优先级越大
+#define OLED_TASK_PRIO 1
+TaskHandle_t oled_task_handler;
+#define OLED_TASK_PERIOD 100
+
+/************************
  *@启动FreeRTOS
- *
- */
+ ************************/
 
 void App_FreeRTOS_start(void) {
 
@@ -58,6 +66,9 @@ void App_FreeRTOS_start(void) {
 
     //4. 创建摇杆任务
     xTaskCreate(joystick_task,"joystick_task",JOYSTICK_TASK_STACK_SIZE,NULL,JOYSTICK_TASK_PRIO,&joystick_task_handler);
+
+    //5. 创建屏幕任务
+    xTaskCreate(oled_task,"oled_task",OLED_TASK_STACK_SIZE,NULL,OLED_TASK_PRIO,&oled_task_handler);
 
     //启动调度器
     vTaskStartScheduler();
@@ -105,5 +116,17 @@ void joystick_task( void * arg ) {
     while (1) {
         App_process_joystick_data();
         vTaskDelayUntil(&xLastExecutionTime, JOYSTICK_TASK_PERIOD);
+    }
+}
+
+void oled_task( void * arg ) {
+    //获取基准时间
+    TickType_t xLastExecutionTime = xTaskGetTickCount();
+    App_oled_Init();
+    while (1) {
+
+        App_oled_show();
+
+        vTaskDelayUntil(&xLastExecutionTime, OLED_TASK_PERIOD);
     }
 }

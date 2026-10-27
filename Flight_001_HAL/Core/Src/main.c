@@ -108,7 +108,6 @@ int main(void)
   //初始化设备
   Int_SI24R1_Init();
   App_flight_Init();
-
   //启动FreeRTOS，后续代码不再进行
   App_FreeRTOS_start();
 

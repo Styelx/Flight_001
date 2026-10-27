@@ -5,9 +5,9 @@ void Int_VL53L1X_Init(void)
 {
     //1. 重置芯片
     HAL_GPIO_WritePin(VX_XSHUT_GPIO_Port, VX_XSHUT_Pin, GPIO_PIN_RESET);
-    vTaskDelay(2);
+    HAL_Delay(2);
     HAL_GPIO_WritePin(VX_XSHUT_GPIO_Port, VX_XSHUT_Pin, GPIO_PIN_SET);
-    vTaskDelay(2);
+    HAL_Delay(2);
 
     uint8_t byteData = 0;
     uint16_t wordData = 0;
@@ -22,7 +22,7 @@ void Int_VL53L1X_Init(void)
     while (sensorState == 0)
     {
         VL53L1X_BootState(dev, &sensorState);
-        vTaskDelay(2);
+        HAL_Delay(2);
     }
     printf("Chip booted\n");
 

@@ -129,8 +129,6 @@ void Int_MPU6050_Init(void) {
 
 /****************************
  *@function:读取角速度
- *
- *
  ****************************/
 void Int_MPU6050_Get_Gyro(Gyroscope_Data *gyroscope_data) {
     uint8_t high = 0;
@@ -172,8 +170,6 @@ void Int_MPU6050_Get_Accel(Accelerometer_Data *accelerometer_data) {
 
 /****************************
  *@function:归并角速度和角加速度
- *
- *
  ****************************/
 void Int_MPU6050_Get_ALL(Gyro_Accel_Data *gyro_accel_data) {
     Int_MPU6050_Get_Gyro(&(gyro_accel_data->gyro_data));

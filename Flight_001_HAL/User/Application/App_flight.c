@@ -17,21 +17,21 @@ extern uint16_t flight_height;
 //先调节内环角速度  再调节外环角度
 
 //偏航角 俯仰角 横滚角
-//极性为负
+//极性为负 -3
 Pid_Struct yaw_pid = {.kp = -3.0f,.ki = 0.0f,.kd = 0.0f, .last_error = 0.0f};
-//极性为正
-Pid_Struct pitch_pid = {.kp = 5.0f,.ki = 0.0f,.kd = 0.0f, .last_error = 0.0f};
-//极性为正
-Pid_Struct roll_pid = {.kp = 5.0f,.ki = 0.0f,.kd = 0.0f, .last_error = 0.0f};
+//极性为正 1.6  0.1  0.002
+Pid_Struct pitch_pid = {.kp = 1.6f,.ki = 0.1f,.kd = 0.002f, .last_error = 0.0f};
+//极性为正 1.6  0.1  0.002
+Pid_Struct roll_pid = {.kp = 1.6f,.ki = 0.1f ,.kd = 0.002f, .last_error = 0.0f};
 
 //z轴角速度 y轴角速度 x轴角速度
 //调参数时先将外环设置为0,现象往一个方向倾斜时能明显感觉到风扇有反方向的推力
-//极性为负
+//极性为负 -5  0  0
 Pid_Struct gyro_z_pid = {.kp = -5.0f,.ki = 0.0f,.kd = 0.0f, .last_error = 0.0f};
-//极性为正
-Pid_Struct gyro_y_pid = {.kp = 3.0f,.ki = 0.0f,.kd = 0.02f, .last_error = 0.0f};
-//极性为负
-Pid_Struct gyro_x_pid = {.kp = 3.0f,.ki = 0.0f,.kd = 0.02f, .last_error = 0.0f};
+//极性为正 2.4  0.0  0.08
+Pid_Struct gyro_y_pid = {.kp = 2.4f,.ki = 0.0f,.kd = 0.08f, .last_error = 0.0f};
+//极性为正 2.4  0.0  0.08
+Pid_Struct gyro_x_pid = {.kp = 2.4f,.ki = 0.0f,.kd = 0.08f, .last_error = 0.0f};
 
 
 //定高PID
@@ -130,11 +130,12 @@ void App_flight_gyro_accel_euler(void) {
     //加速度解算 俯仰角向上为正 横滚角向右为负
     //范围 -180° —— +180°
     euler_data.pitch = atan2(gyro_accel_data.accel_data.accel_x, gyro_accel_data.accel_data.accel_z) * 180 / 3.14159;
-    euler_data.roll = atan2(gyro_accel_data.accel_data.accel_y, gyro_accel_data.accel_data.accel_z) * 180 / 3.14159;
+    euler_data.roll = 0.0f - atan2(gyro_accel_data.accel_data.accel_y, gyro_accel_data.accel_data.accel_z) * 180 / 3.14159;
 
     //角速度积分 偏航角 启动后初始化完成时面朝的方向为0°,从上往下看逆时针为正
     //创建一个float变量保存累加和,若直接用(int16_t)yaw累加,强制类型转换时会截断,获取不到真实数据
     //此处如果一直往一个方向转会超过360°
+    //偏航角有可能会在角速度接近0时无限累加,产生一个消除不掉的偏差
     euler_yaw_sum += (gyro_accel_data.gyro_data.gyro_z * 2000 / 32769.0f) * 0.006;
     euler_data.yaw = euler_yaw_sum;
 
@@ -144,7 +145,7 @@ void App_flight_gyro_accel_euler(void) {
     //调试
     // debug_printf("%d, %d, %d\n",gyro_accel_data.gyro_data.gyro_x,gyro_accel_data.gyro_data.gyro_y,gyro_accel_data.gyro_data.gyro_z);
     // debug_printf("%d, %d, %d\n",gyro_accel_data.accel_data.accel_x,gyro_accel_data.accel_data.accel_y,gyro_accel_data.accel_data.accel_z);
-    // debug_printf("%d, %d, %d\n", euler_data.pitch, euler_data.roll, euler_data.yaw);
+    debug_printf("%d, %d, %d\n", euler_data.pitch, euler_data.roll, euler_data.yaw);
 }
 
 void App_pid_process(void) {
@@ -185,10 +186,10 @@ void App_flight_control_motor(void) {
             right_bottom_motor.speed = 0;
             break;
         case NORMAL:
-            left_top_motor.speed = remote_data.thr + gyro_y_pid.output - gyro_x_pid.output + gyro_z_pid.output;
-            right_top_motor.speed = remote_data.thr + gyro_y_pid.output + gyro_x_pid.output - gyro_z_pid.output;
-            left_bottom_motor.speed = remote_data.thr - gyro_y_pid.output - gyro_x_pid.output - gyro_z_pid.output;
-            right_bottom_motor.speed = remote_data.thr - gyro_y_pid.output + gyro_x_pid.output + gyro_z_pid.output;
+            left_top_motor.speed = remote_data.thr + gyro_y_pid.output - gyro_x_pid.output + Int_motor_limit_speed(gyro_z_pid.output,-100,100);
+            right_top_motor.speed = remote_data.thr + gyro_y_pid.output + gyro_x_pid.output - Int_motor_limit_speed(gyro_z_pid.output,-100,100);
+            left_bottom_motor.speed = remote_data.thr - gyro_y_pid.output - gyro_x_pid.output - Int_motor_limit_speed(gyro_z_pid.output,-100,100);
+            right_bottom_motor.speed = remote_data.thr - gyro_y_pid.output + gyro_x_pid.output + Int_motor_limit_speed(gyro_z_pid.output,-100,100);
             break;
         case FIX_HEIGHT:
             left_top_motor.speed = remote_data.thr + gyro_y_pid.output - gyro_x_pid.output + gyro_z_pid.output + fix_height_pid.output;
@@ -209,10 +210,10 @@ void App_flight_control_motor(void) {
             break;
     }
     //限制电机速度上限 防止过热
-    left_top_motor.speed = Int_motor_limit_speed(left_top_motor.speed,0,600);
-    right_top_motor.speed = Int_motor_limit_speed(right_top_motor.speed,0,600);
-    left_bottom_motor.speed = Int_motor_limit_speed(left_bottom_motor.speed,0,600);
-    right_bottom_motor.speed = Int_motor_limit_speed(right_bottom_motor.speed,0,600);
+    left_top_motor.speed = Int_motor_limit_speed(left_top_motor.speed,0,700);
+    right_top_motor.speed = Int_motor_limit_speed(right_top_motor.speed,0,700);
+    left_bottom_motor.speed = Int_motor_limit_speed(left_bottom_motor.speed,0,700);
+    right_bottom_motor.speed = Int_motor_limit_speed(right_bottom_motor.speed,0,700);
 
     //安全限制 油门小于50时强制归零
     if (remote_data.thr < 50) {
